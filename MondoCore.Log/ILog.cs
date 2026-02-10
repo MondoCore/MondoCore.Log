@@ -87,6 +87,40 @@ namespace MondoCore.Log
         }
 
         /// <summary>
+        /// Write a debug event to the log. Usually reserved for development
+        /// </summary>
+        /// <param name="eventName">Name of event to write</param>
+        /// <param name="properties">See examples in WriteError</param>
+        /// <param name="metrics">An optional dictionary of metrics to write</param>
+        /// <param name="correlationId">A value to correlate actions across calls and processes</param>
+        public Task WriteDebug(string eventName, object? properties = null, string? correlationId = null)
+        {
+            return this.WriteTelemetry(new Telemetry { 
+                                                        Type          = Telemetry.TelemetryType.Debug, 
+                                                        Message       = eventName,
+                                                        CorrelationId = correlationId,
+                                                        Properties    = properties
+                                                     });
+        }
+
+        /// <summary>
+        /// Write a test event to the log. For logging integration/smoke test data not usually done in production
+        /// </summary>
+        /// <param name="eventName">Name of event to write</param>
+        /// <param name="properties">See examples in WriteError</param>
+        /// <param name="metrics">An optional dictionary of metrics to write</param>
+        /// <param name="correlationId">A value to correlate actions across calls and processes</param>
+        public Task WriteTest(string eventName, object? properties = null, string? correlationId = null)
+        {
+            return this.WriteTelemetry(new Telemetry { 
+                                                        Type          = Telemetry.TelemetryType.Test, 
+                                                        Message       = eventName,
+                                                        CorrelationId = correlationId,
+                                                        Properties    = properties
+                                                     });
+        }
+
+        /// <summary>
         /// Write a series of metrics to the log
         /// </summary>
         /// <param name="metricNamespace">Namespace of metrics being</param>
@@ -197,14 +231,20 @@ namespace MondoCore.Log
         public IDictionary<string, double>? Metrics { get; set; }
         public RequestParams?               Request { get; set; }
 
+        [Flags]
         public enum TelemetryType
         {
-            Error,
-            Event,
-            Metric,
-            Trace,
-            Request,
-            Availability
+            None                = 0,
+            Error               = 1,
+            Event               = 2,
+            Metric              = 4,
+            Trace               = 8,
+            Request             = 16,
+            Availability        = 32,
+            Debug               = 64,
+            Test                = 128,
+            AllExceptDebugTest  = Error | Event | Metric | Trace | Request | Availability,
+            All                 = AllExceptDebugTest | Debug | Test
         }
 
         public class RequestParams

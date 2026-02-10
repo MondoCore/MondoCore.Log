@@ -10,7 +10,7 @@
  *  Original Author: Jim Lightfoot                                          
  *    Creation Date: 11 Apr 2014                                             
  *                                                                          
- *   Copyright (c) 2014-2024 - Jim Lightfoot, All rights reserved                
+ *   Copyright (c) 2014-2026 - Jim Lightfoot, All rights reserved                
  *                                                                          
  *  Licensed under the MIT license:                                         
  *    http://www.opensource.org/licenses/mit-license.php                    
@@ -31,19 +31,9 @@ namespace MondoCore.Log
         private readonly List<LogEntry> _logs = new List<LogEntry>();
 
         /*************************************************************************/
-        public void Register(ILog log, bool fallbackOnly = false, bool fallbackAsError = false, ICollection<Telemetry.TelemetryType> types = null)
+        public void Register(ILog log, bool fallbackOnly = false, bool fallbackAsError = false, Telemetry.TelemetryType types =  Telemetry.TelemetryType.AllExceptDebugTest)
         {
-            IDictionary<Telemetry.TelemetryType, bool> dtypes = null;
-
-            if(types != null && types.Count > 0)
-            { 
-                dtypes = new Dictionary<Telemetry.TelemetryType, bool>();
-
-                foreach(var type in types)
-                    dtypes.Add(type, true);
-            }
-
-            _logs.Add(new LogEntry {Log = log, FallbackOnly = fallbackOnly, FallbackAsError = fallbackAsError, Types = dtypes});
+            _logs.Add(new LogEntry {Log = log, FallbackOnly = fallbackOnly, FallbackAsError = fallbackAsError, Types = types});
         }
 
         /*************************************************************************/
@@ -71,7 +61,7 @@ namespace MondoCore.Log
                 var logger = _logs[i];
 
                 // Only log what this sink accepts
-                if(logger.Types != null && !logger.Types.ContainsKey(telemetry.Type))
+                if((logger.Types & telemetry.Type) == Telemetry.TelemetryType.None)
                     continue;
 
                 // Only write primary telemetry to non-fallback loggers
@@ -135,7 +125,7 @@ namespace MondoCore.Log
             try
             {
                 var retries = 5;
-                Exception exLast = null;
+                Exception? exLast = null;
 
                 while(retries-- > 0)
                 {
@@ -207,10 +197,10 @@ namespace MondoCore.Log
         /*************************************************************************/
         private struct LogEntry
         {
-            internal bool FallbackAsError;
-            internal bool FallbackOnly;
-            internal ILog Log;
-            internal IDictionary<Telemetry.TelemetryType, bool> Types;
+            internal bool                    FallbackAsError;
+            internal bool                    FallbackOnly;
+            internal ILog                    Log;
+            internal Telemetry.TelemetryType Types;
         }
 
         #endregion

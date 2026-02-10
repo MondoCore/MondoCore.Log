@@ -8,7 +8,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/jim-lightfoot/MondoCore.Log</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.3.1</Version>
+    <Version>2.4.0</Version>
     <Title>MondoCore.Log</Title>
     <Description>Modern logging library</Description>
     <Nullable>enable</Nullable>
@@ -19,11 +19,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\LICENSE">
+    <None Include="..\..\MondoCore.Common\LICENSE">
       <Pack>True</Pack>
-      <PackagePath></PackagePath>
+      <PackagePath>\</PackagePath>
     </None>
-    <None Include="..\README.md">
+    <None Include="..\..\MondoCore.Common\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

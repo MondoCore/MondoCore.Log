@@ -1,13 +1,8 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-
-using MondoCore.Log;
 using MondoCore.Collections;
+using Moq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MondoCore.Log.UnitTests
 {
@@ -73,10 +68,10 @@ namespace MondoCore.Log.UnitTests
             Assert.AreEqual(Telemetry.TelemetryType.Error, _errors[0].Type);
             Assert.AreEqual("Alices's hair is on fire", _errors[0].Exception?.Message);
 
-            Assert.AreEqual("Chevy",    _errors[0].Properties?.ToReadOnlyDictionary()["Make"]);
-            Assert.AreEqual("Corvette", _errors[0].Properties?.ToReadOnlyDictionary()["Model"]);
-            Assert.AreEqual("Blue",     _errors[0].Properties?.ToReadOnlyDictionary()["Color"]);
-            Assert.AreEqual("1956",     _errors[0].Properties?.ToReadOnlyDictionary()["Year"]);
+            Assert.AreEqual("Chevy",    _errors[0].Properties?.ToReadOnlyDictionary()!["Make"]);
+            Assert.AreEqual("Corvette", _errors[0].Properties?.ToReadOnlyDictionary()!["Model"]);
+            Assert.AreEqual("Blue",     _errors[0].Properties?.ToReadOnlyDictionary()!["Color"]);
+            Assert.AreEqual("1956",     _errors[0].Properties?.ToReadOnlyDictionary()!["Year"]);
         }
 
         [TestMethod]
@@ -99,11 +94,11 @@ namespace MondoCore.Log.UnitTests
             Assert.AreEqual(1, _errors.Count);
             Assert.AreEqual(Telemetry.TelemetryType.Error, _errors[0].Type);
 
-            Assert.AreEqual("Chevy",    _errors[0].Properties?.ToReadOnlyDictionary()["Make"]);
-            Assert.AreEqual("Corvette", _errors[0].Properties?.ToReadOnlyDictionary()["Model"]);
-            Assert.AreEqual("Blue",     _errors[0].Properties?.ToReadOnlyDictionary()["Color"]);
-            Assert.AreEqual("1956",     _errors[0].Properties?.ToReadOnlyDictionary()["Year"]);
-            Assert.AreEqual("350",     _errors[0].Properties?.ToReadOnlyDictionary()["Engine"]);
+            Assert.AreEqual("Chevy",    _errors[0].Properties?.ToReadOnlyDictionary()!["Make"]);
+            Assert.AreEqual("Corvette", _errors[0].Properties?.ToReadOnlyDictionary()!["Model"]);
+            Assert.AreEqual("Blue",     _errors[0].Properties?.ToReadOnlyDictionary()!["Color"]);
+            Assert.AreEqual("1956",     _errors[0].Properties?.ToReadOnlyDictionary()!["Year"]);
+            Assert.AreEqual("350",      _errors[0].Properties?.ToReadOnlyDictionary()!["Engine"]);
         }
 
 
@@ -180,9 +175,9 @@ namespace MondoCore.Log.UnitTests
 
             log.Register(log1);
             log.Register(failLog, true);
-            log.Register(log2, types: new List<Telemetry.TelemetryType> { Telemetry.TelemetryType.Trace,   Telemetry.TelemetryType.Error } );
-            log.Register(log3, types: new List<Telemetry.TelemetryType> { Telemetry.TelemetryType.Request, Telemetry.TelemetryType.Event } );
-            log.Register(log4, types: new List<Telemetry.TelemetryType> { Telemetry.TelemetryType.Trace } );
+            log.Register(log2, types: Telemetry.TelemetryType.Trace | Telemetry.TelemetryType.Error );
+            log.Register(log3, types: Telemetry.TelemetryType.Request | Telemetry.TelemetryType.Event );
+            log.Register(log4, types: Telemetry.TelemetryType.Trace);
 
             await ((ILog)log).WriteError(new Exception("Bob's hair is on fire"));
             await ((ILog)log).WriteEvent("No it's not");
@@ -220,6 +215,80 @@ namespace MondoCore.Log.UnitTests
             Assert.AreEqual(Telemetry.TelemetryType.Event, _errors[0].Type);
             Assert.AreEqual("Race", _errors[0].Message);
             Assert.AreEqual(correlationId, _errors[0].CorrelationId);
+        }
+
+        #endregion
+
+        #region WriteTest
+
+        [TestMethod]
+        public async Task Log_WriteTest()
+        {
+            var correlationId = Guid.NewGuid().ToString();
+            var log    = new Log();
+            var errors = new List<Telemetry>();
+            var log1   = new TestLog(errors);
+
+            log.Register(log1, types: Telemetry.TelemetryType.All);
+
+            await ((ILog)log).WriteTest("Race", new { Model = "Chevy" }, correlationId);
+
+            Assert.AreEqual(1, errors.Count);
+            Assert.AreEqual(Telemetry.TelemetryType.Test, errors[0].Type);
+            Assert.AreEqual("Race", errors[0].Message);
+            Assert.AreEqual(correlationId, errors[0].CorrelationId);
+        }
+
+        [TestMethod]
+        public async Task Log_WriteTest_not_registered()
+        {
+            var correlationId = Guid.NewGuid().ToString();
+            var log    = new Log();
+            var errors = new List<Telemetry>();
+            var log1   = new TestLog(errors);
+
+            log.Register(log1, types: Telemetry.TelemetryType.AllExceptDebugTest);
+
+            await ((ILog)log).WriteTest("Race", new { Model = "Chevy" }, correlationId);
+
+            Assert.AreEqual(0, errors.Count);
+        }
+
+        #endregion
+
+        #region WriteDebug
+
+        [TestMethod]
+        public async Task Log_WriteDebug()
+        {
+            var correlationId = Guid.NewGuid().ToString();
+            var log    = new Log();
+            var errors = new List<Telemetry>();
+            var log1   = new TestLog(errors);
+
+            log.Register(log1, types: Telemetry.TelemetryType.All);
+
+            await ((ILog)log).WriteDebug("Race", new { Model = "Chevy" }, correlationId);
+
+            Assert.AreEqual(1, errors.Count);
+            Assert.AreEqual(Telemetry.TelemetryType.Debug, errors[0].Type);
+            Assert.AreEqual("Race", errors[0].Message);
+            Assert.AreEqual(correlationId, errors[0].CorrelationId);
+        }
+
+        [TestMethod]
+        public async Task Log_WriteDebug_not_registered()
+        {
+            var correlationId = Guid.NewGuid().ToString();
+            var log    = new Log();
+            var errors = new List<Telemetry>();
+            var log1   = new TestLog(errors);
+
+            log.Register(log1, types: Telemetry.TelemetryType.AllExceptDebugTest);
+
+            await ((ILog)log).WriteDebug("Race", new { Model = "Chevy" }, correlationId);
+
+            Assert.AreEqual(0, errors.Count);
         }
 
         #endregion
