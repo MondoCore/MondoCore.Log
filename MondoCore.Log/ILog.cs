@@ -58,7 +58,8 @@ namespace MondoCore.Log
         /// <param name="correlationId">A value to correlate actions across calls and processes</param>
         public Task WriteError(Exception ex, Telemetry.LogSeverity severity = Telemetry.LogSeverity.Error, object? properties = null, string? correlationId = null)
         {
-            var props = properties.ToReadOnlyDictionary().MergeData(ex);
+            var dict = properties?.ToReadOnlyDictionary();
+            var props = dict!.MergeData(ex);
 
             return this.WriteTelemetry(new Telemetry { 
                                                         Type          = Telemetry.TelemetryType.Error, 
